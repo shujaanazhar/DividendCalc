@@ -63,7 +63,20 @@ body {
   transition: background .2s, color .2s;
 }
 
+/* ── Gate visibility ────────────────────────────────────────── */
+body.gate-visible .sidebar,
+body.gate-visible .main,
+body.gate-visible .mobile-header,
+body.gate-visible .mobile-nav { display: none !important; }
+
 /* ── Key gate ───────────────────────────────────────────────── */
+#key-gate { display: none; }
+
+#key-gate.visible,
+body.gate-visible #key-gate {
+  display: flex;
+}
+
 #key-gate {
   position: fixed; inset: 0;
   background: var(--sidebar-bg);

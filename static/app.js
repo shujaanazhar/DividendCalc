@@ -47,16 +47,12 @@ async function initGate() {
 }
 
 function showGate() {
-  $('key-gate').style.display = 'flex';
-  document.querySelector('.sidebar').style.display = 'none';
-  document.querySelector('.main').style.display = 'none';
+  document.body.classList.add('gate-visible');
   setTimeout(() => $('gate-key-input').focus(), 60);
 }
 
 function showApp() {
-  $('key-gate').style.display = 'none';
-  document.querySelector('.sidebar').style.display = '';
-  document.querySelector('.main').style.display = '';
+  document.body.classList.remove('gate-visible');
 }
 
 async function submitGate() {

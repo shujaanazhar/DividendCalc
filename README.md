@@ -90,6 +90,7 @@ The app has three views accessible from the sidebar:
 - **Portfolio** — stocks grouped by symbol showing total shares per company, with individual purchase lots listed under each
 - **History** — every individual purchase entry sorted oldest first, with the ability to delete individual lots
 - **Calculate** — select a period and tax status, then fetch live PSX data and compute your dividends
+- **Theme toggle** — switch between dark and light mode from the sidebar; preference is saved to `localStorage`
 
 ## Running the CLI (alternative)
 

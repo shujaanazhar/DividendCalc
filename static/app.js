@@ -39,8 +39,8 @@ async function initGate() {
   const stored = getApiKey();
   if (stored) {
     // Verify stored key is still valid
-    const { ok } = await apiFetch('/api/portfolio');
-    if (ok) { showApp(); return; }
+    const { ok, data } = await apiFetch('/api/portfolio');
+    if (ok) { showApp(); renderPortfolio(data); return; }
     localStorage.removeItem('psx_api_key');
   }
   showGate();

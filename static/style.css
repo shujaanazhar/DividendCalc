@@ -145,7 +145,7 @@ body {
   margin-left: var(--sidebar-w);
   flex: 1;
   padding: 2rem 2.5rem;
-  max-width: 960px;
+  min-width: 0;
 }
 
 /* ── Views ──────────────────────────────────────────────────── */
@@ -232,7 +232,7 @@ body {
 /* ── Portfolio grid ─────────────────────────────────────────── */
 .portfolio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
 }
 

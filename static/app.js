@@ -457,6 +457,26 @@ function renderResults(data) {
   $('results').style.display = 'block';
 }
 
+// ── Theme ──────────────────────────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem('psx_theme') || 'dark';
+  applyTheme(saved);
+
+  $('theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('psx_theme', theme);
+  const isDark = theme === 'dark';
+  $('theme-icon-dark').style.display  = isDark ? '' : 'none';
+  $('theme-icon-light').style.display = isDark ? 'none' : '';
+  $('theme-label').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Default date inputs
@@ -469,6 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('gate-submit').addEventListener('click', submitGate);
   $('gate-key-input').addEventListener('keydown', e => { if (e.key === 'Enter') submitGate(); });
 
+  initTheme();
   initNav();
   initPeriodPills();
   initGate();

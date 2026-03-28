@@ -235,8 +235,8 @@ async function deleteHolding(id) {
       : 'Remove this holding? This cannot be undone.'
   );
   if (!ok) return;
-  const { ok } = await apiFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
-  if (ok) {
+  const { ok: deleted } = await apiFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
+  if (deleted) {
     loadPortfolio();
     $('results').style.display = 'none';
   }

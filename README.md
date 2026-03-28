@@ -4,7 +4,7 @@ A web app to track and calculate cash dividends received on your Pakistan Stock 
 
 ## Features
 
-- Add holdings by company symbol, number of shares, and purchase date
+- Add multiple holdings at once — enter as many stocks as you want in a single modal and save them all in one click
 - Live dividend data fetched from the PSX data portal (`dps.psx.com.pk`)
 - Dividends only counted if the ex-date falls on or after your purchase date
 - Withholding tax calculation — filer (15%) or non-filer (20%)
@@ -135,7 +135,8 @@ The FastAPI server exposes the following endpoints. Interactive docs available a
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/portfolio` | List all holdings |
-| `POST` | `/api/portfolio` | Add a holding |
+| `POST` | `/api/portfolio` | Add a single holding |
+| `POST` | `/api/portfolio/bulk` | Add multiple holdings in one request (max 50) |
 | `DELETE` | `/api/portfolio/{idx}` | Remove a holding by index |
 | `POST` | `/api/calculate` | Calculate dividends |
 

@@ -197,6 +197,22 @@ def db_add_holding(symbol: str, shares: int, purchase_date: str) -> dict:
             return dict(cur.fetchone())
 
 
+def db_add_holdings_bulk(holdings: list) -> list:
+    """Insert multiple holdings in a single transaction."""
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            results = []
+            for h in holdings:
+                cur.execute(
+                    """INSERT INTO holdings (symbol, shares, purchase_date)
+                       VALUES (%s, %s, %s)
+                       RETURNING id, symbol, shares, purchase_date::text""",
+                    (h.symbol, h.shares, h.purchase_date),
+                )
+                results.append(dict(cur.fetchone()))
+            return results
+
+
 def db_delete_holding(holding_id: int) -> bool:
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -342,6 +358,16 @@ def get_portfolio(request: Request):
 @limiter.limit("30/minute")
 def add_holding(request: Request, holding: Holding):
     return db_add_holding(holding.symbol, holding.shares, holding.purchase_date)
+
+
+@app.post("/api/portfolio/bulk", status_code=201, dependencies=[auth])
+@limiter.limit("20/minute")
+def add_holdings_bulk(request: Request, holdings: list[Holding]):
+    if not holdings:
+        raise HTTPException(400, "No holdings provided")
+    if len(holdings) > 50:
+        raise HTTPException(400, "Maximum 50 holdings per batch")
+    return db_add_holdings_bulk(holdings)
 
 
 @app.delete("/api/portfolio/{holding_id}", dependencies=[auth])

@@ -151,46 +151,91 @@ async function deleteHolding(id) {
 
 // ── Modal ──────────────────────────────────────────────────────────────────
 function openModal() {
-  $('add-symbol').value = '';
-  $('add-shares').value = '';
-  $('add-date').value   = '';
+  $('holdings-rows').innerHTML = '';
   $('modal-error').style.display = 'none';
+  addRow();  // start with one empty row
   $('modal-backdrop').classList.add('open');
-  setTimeout(() => $('add-symbol').focus(), 60);
 }
 
 function closeModal() {
   $('modal-backdrop').classList.remove('open');
 }
 
-async function submitHolding() {
-  const symbol = $('add-symbol').value.trim().toUpperCase();
-  const shares = parseInt($('add-shares').value.trim());
-  const date   = $('add-date').value;
-  const errEl  = $('modal-error');
+function addRow(symbol = '', shares = '', date = '') {
+  const today = new Date().toISOString().slice(0, 10);
+  const row = document.createElement('div');
+  row.className = 'holding-row';
+  row.innerHTML = `
+    <input type="text"   class="row-symbol" placeholder="HBL"  value="${symbol}" autocomplete="off" spellcheck="false" />
+    <input type="number" class="row-shares" placeholder="1000" value="${shares}" min="1" />
+    <input type="date"   class="row-date"   value="${date || today}" />
+    <button class="btn-remove-row" title="Remove">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  `;
+  row.querySelector('.btn-remove-row').addEventListener('click', () => {
+    row.remove();
+    // Always keep at least one row
+    if ($('holdings-rows').children.length === 0) addRow();
+  });
+  // uppercase symbol as you type
+  row.querySelector('.row-symbol').addEventListener('input', e => {
+    const pos = e.target.selectionStart;
+    e.target.value = e.target.value.toUpperCase();
+    e.target.setSelectionRange(pos, pos);
+  });
+  $('holdings-rows').appendChild(row);
+  row.querySelector('.row-symbol').focus();
+}
 
-  errEl.style.display = 'none';
+async function submitHoldings() {
+  $('modal-error').style.display = 'none';
 
-  if (!symbol) return showModalErr('Symbol is required.');
-  if (!shares || shares <= 0) return showModalErr('Enter a valid number of shares.');
-  if (!date) return showModalErr('Purchase date is required.');
+  const rows = [...$('holdings-rows').querySelectorAll('.holding-row')];
+  const holdings = [];
+  let valid = true;
+
+  rows.forEach(row => {
+    const symbolEl = row.querySelector('.row-symbol');
+    const sharesEl = row.querySelector('.row-shares');
+    const dateEl   = row.querySelector('.row-date');
+
+    symbolEl.classList.remove('invalid');
+    sharesEl.classList.remove('invalid');
+    dateEl.classList.remove('invalid');
+
+    const symbol = symbolEl.value.trim().toUpperCase();
+    const shares = parseInt(sharesEl.value);
+    const date   = dateEl.value;
+
+    if (!symbol)           { symbolEl.classList.add('invalid'); valid = false; }
+    if (!shares || shares <= 0) { sharesEl.classList.add('invalid'); valid = false; }
+    if (!date)             { dateEl.classList.add('invalid');   valid = false; }
+
+    if (symbol && shares > 0 && date) {
+      holdings.push({ symbol, shares, purchase_date: date });
+    }
+  });
+
+  if (!valid) return showModalErr('Please fix the highlighted fields.');
+  if (!holdings.length) return showModalErr('Add at least one holding.');
 
   $('modal-submit').disabled = true;
-  $('modal-submit').textContent = 'Adding…';
+  $('modal-submit').textContent = `Saving ${holdings.length}…`;
 
-  const { ok, data } = await apiFetch('/api/portfolio', {
+  const { ok, data } = await apiFetch('/api/portfolio/bulk', {
     method: 'POST',
-    body: JSON.stringify({ symbol, shares, purchase_date: date }),
+    body: JSON.stringify(holdings),
   });
 
   $('modal-submit').disabled = false;
-  $('modal-submit').textContent = 'Add Holding';
+  $('modal-submit').textContent = 'Save All';
 
   if (!ok) {
     const detail = data.detail;
     const msg = Array.isArray(detail)
       ? detail.map(e => e.msg.replace('Value error, ', '')).join(' · ')
-      : (detail || 'Failed to add holding.');
+      : (detail || 'Failed to save holdings.');
     return showModalErr(msg);
   }
 
@@ -347,14 +392,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('empty-add-btn').addEventListener('click', openModal);
   $('modal-close').addEventListener('click', closeModal);
   $('modal-cancel').addEventListener('click', closeModal);
-  $('modal-submit').addEventListener('click', submitHolding);
+  $('modal-submit').addEventListener('click', submitHoldings);
+  $('add-row-btn').addEventListener('click', () => addRow());
   $('modal-backdrop').addEventListener('click', e => {
     if (e.target === $('modal-backdrop')) closeModal();
-  });
-
-  // Enter key in modal fields
-  [$('add-symbol'), $('add-shares'), $('add-date')].forEach(el => {
-    el.addEventListener('keydown', e => { if (e.key === 'Enter') submitHolding(); });
   });
 
   // Escape closes modal

@@ -17,13 +17,15 @@
   <div id="key-gate" style="display:none;">
     <div class="gate-box">
       <div class="gate-logo"><div class="logo-mark">PSX</div></div>
-      <h2>Enter API Key</h2>
-      <p>This app is private. Enter your API key to continue.</p>
+      <h2>Dividend Calculator</h2>
+      <p>Personal &amp; Private</p>
       <div class="field">
-        <input type="password" id="gate-key-input" placeholder="API key" autocomplete="current-password" />
+        <label for="gate-key-input">API Key</label>
+        <input type="password" id="gate-key-input" placeholder="••••••••••••••••••••" autocomplete="current-password" />
       </div>
       <div class="gate-error" id="gate-error" style="display:none;">Incorrect API key.</div>
       <button class="btn btn-primary" id="gate-submit">Unlock</button>
+      <p style="font-size:.72rem;color:#334155;margin-top:.25rem;">Your financial data stays private</p>
     </div>
   </div>
 
@@ -37,6 +39,7 @@
       </div>
     </div>
 
+    <div class="sidebar-divider"></div>
     <nav class="sidebar-nav">
       <a href="#" class="nav-item active" data-view="portfolio">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -231,7 +234,7 @@
             </div>
             <div class="breakdown-item breakdown-tax">
               <span class="breakdown-label">WHT Deducted (<span id="tax-rate-label"></span>%)</span>
-              <span class="breakdown-value" id="grand-tax"></span>
+              <span class="breakdown-value" id="grand-tax">−</span>
             </div>
           </div>
         </div>

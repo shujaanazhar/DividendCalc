@@ -151,7 +151,11 @@ function renderPortfolio(portfolio) {
     });
     // Delete all lots for this symbol
     tr.querySelector('.btn-danger').addEventListener('click', async () => {
-      if (!confirm(`Remove all ${g.lots.length} lot(s) of ${g.symbol}?`)) return;
+      const ok = await confirmDialog(
+        `Delete ${g.symbol}?`,
+        `This will permanently remove all ${g.lots.length} lot${g.lots.length > 1 ? 's' : ''} of ${g.symbol} (${g.totalShares.toLocaleString()} shares total). This cannot be undone.`
+      );
+      if (!ok) return;
       for (const lot of g.lots) {
         await apiFetch(`/api/portfolio/${lot.id}`, { method: 'DELETE' });
       }
@@ -227,7 +231,14 @@ function filterHistoryBySymbol(symbol) {
 }
 
 async function deleteHolding(id) {
-  if (!confirm('Remove this holding?')) return;
+  const holding = allHoldings.find(h => h.id === id);
+  const ok = await confirmDialog(
+    'Delete this holding?',
+    holding
+      ? `Remove ${holding.shares.toLocaleString()} shares of ${holding.symbol} purchased on ${holding.purchase_date}? This cannot be undone.`
+      : 'Remove this holding? This cannot be undone.'
+  );
+  if (!ok) return;
   const { ok } = await apiFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
   if (ok) {
     loadPortfolio();
@@ -455,6 +466,38 @@ function renderResults(data) {
   });
 
   $('results').style.display = 'block';
+}
+
+// ── Confirm dialog ─────────────────────────────────────────────────────────
+function confirmDialog(title, msg) {
+  return new Promise(resolve => {
+    $('confirm-title').textContent = title;
+    $('confirm-msg').textContent   = msg;
+    $('confirm-backdrop').classList.add('open');
+    $('confirm-ok').focus();
+
+    function finish(result) {
+      $('confirm-backdrop').classList.remove('open');
+      off();
+      resolve(result);
+    }
+
+    function off() {
+      $('confirm-ok').removeEventListener('click', onOk);
+      $('confirm-cancel').removeEventListener('click', onCancel);
+      $('confirm-close').removeEventListener('click', onCancel);
+      document.removeEventListener('keydown', onKey);
+    }
+
+    const onOk     = () => finish(true);
+    const onCancel = () => finish(false);
+    const onKey    = e => { if (e.key === 'Escape') finish(false); };
+
+    $('confirm-ok').addEventListener('click', onOk);
+    $('confirm-cancel').addEventListener('click', onCancel);
+    $('confirm-close').addEventListener('click', onCancel);
+    document.addEventListener('keydown', onKey);
+  });
 }
 
 // ── Theme ──────────────────────────────────────────────────────────────────

@@ -643,6 +643,34 @@ body.gate-visible .mobile-nav { display: none !important; }
 
 .details-text { font-size: .75rem; color: var(--muted); font-family: monospace; }
 
+/* ── Inline edit ────────────────────────────────────────────── */
+.btn-icon {
+  background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  padding: .35rem; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .15s, background .15s;
+}
+.btn-icon svg { width: 15px; height: 15px; }
+.btn-edit:hover { color: var(--accent); background: var(--accent-glow); }
+
+.inline-input {
+  padding: .35rem .55rem;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  font-family: inherit; font-size: .875rem;
+  color: var(--text); background: var(--surface2);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+.inline-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.inline-input.invalid { border-color: var(--red); }
+.inline-input[type="date"] { color-scheme: var(--color-scheme); }
+
+.btn-inline-save  { padding: .35rem .55rem; }
+.btn-inline-cancel { padding: .35rem .5rem; }
+
 /* ── Modal ──────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0;

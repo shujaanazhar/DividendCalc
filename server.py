@@ -54,7 +54,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],   # tighten to your Vercel domain after deploy
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["X-API-Key", "Content-Type"],
 )
 
@@ -220,6 +220,19 @@ def db_delete_holding(holding_id: int) -> bool:
             return cur.rowcount > 0
 
 
+def db_update_holding(holding_id: int, symbol: str, shares: int, purchase_date: str) -> dict | None:
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """UPDATE holdings SET symbol=%s, shares=%s, purchase_date=%s
+                   WHERE id=%s
+                   RETURNING id, symbol, shares, purchase_date::text""",
+                (symbol, shares, purchase_date, holding_id),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
 # ── PSX scraper ───────────────────────────────────────────────────────────────
 
 def fetch_dividends(symbol: str) -> list:
@@ -368,6 +381,17 @@ def add_holdings_bulk(request: Request, holdings: list[Holding]):
     if len(holdings) > 50:
         raise HTTPException(400, "Maximum 50 holdings per batch")
     return db_add_holdings_bulk(holdings)
+
+
+@app.put("/api/portfolio/{holding_id}", dependencies=[auth])
+@limiter.limit("30/minute")
+def update_holding(request: Request, holding_id: int, holding: Holding):
+    if holding_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+    row = db_update_holding(holding_id, holding.symbol, holding.shares, holding.purchase_date)
+    if not row:
+        raise HTTPException(status_code=404, detail="Holding not found")
+    return row
 
 
 @app.delete("/api/portfolio/{holding_id}", dependencies=[auth])

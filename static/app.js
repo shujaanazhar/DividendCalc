@@ -205,20 +205,97 @@ function renderHistory(portfolio, filterSymbol = '') {
   bodyEl.innerHTML = '';
 
   [...filtered].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date)).forEach(h => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${h.purchase_date}</td>
-      <td><span class="symbol-pill">${h.symbol}</span></td>
-      <td>${h.shares.toLocaleString()}</td>
-      <td>
-        <button class="btn btn-danger" title="Remove">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </td>
-    `;
-    tr.querySelector('.btn-danger').addEventListener('click', () => deleteHolding(h.id));
-    bodyEl.appendChild(tr);
+    bodyEl.appendChild(makeHistoryRow(h));
   });
+}
+
+function makeHistoryRow(h) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${h.purchase_date}</td>
+    <td><span class="symbol-pill">${h.symbol}</span></td>
+    <td>${h.shares.toLocaleString()}</td>
+    <td>
+      <button class="btn-icon btn-edit" title="Edit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+    </td>
+    <td>
+      <button class="btn btn-danger" title="Remove">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </td>
+  `;
+  tr.querySelector('.btn-edit').addEventListener('click', () => startEditRow(tr, h));
+  tr.querySelector('.btn-danger').addEventListener('click', () => deleteHolding(h.id));
+  return tr;
+}
+
+function startEditRow(tr, h) {
+  tr.innerHTML = `
+    <td><input class="inline-input" type="date" value="${h.purchase_date}" /></td>
+    <td><input class="inline-input" type="text" value="${h.symbol}" maxlength="8" style="width:80px;text-transform:uppercase;" /></td>
+    <td><input class="inline-input" type="number" value="${h.shares}" min="1" style="width:90px;" /></td>
+    <td>
+      <button class="btn btn-primary btn-inline-save" title="Save">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </td>
+    <td>
+      <button class="btn btn-danger btn-inline-cancel" title="Cancel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </td>
+  `;
+  const symInput = tr.querySelector('input[type="text"]');
+  symInput.addEventListener('input', e => {
+    const pos = e.target.selectionStart;
+    e.target.value = e.target.value.toUpperCase();
+    e.target.setSelectionRange(pos, pos);
+  });
+  tr.querySelector('.btn-inline-cancel').addEventListener('click', () => {
+    tr.replaceWith(makeHistoryRow(h));
+  });
+  tr.querySelector('.btn-inline-save').addEventListener('click', () => saveEditRow(tr, h));
+}
+
+async function saveEditRow(tr, h) {
+  const dateVal   = tr.querySelector('input[type="date"]').value;
+  const symbolVal = tr.querySelector('input[type="text"]').value.trim().toUpperCase();
+  const sharesVal = parseInt(tr.querySelector('input[type="number"]').value);
+
+  if (!dateVal || !symbolVal || !sharesVal || sharesVal <= 0) {
+    tr.querySelectorAll('.inline-input').forEach(el => {
+      el.classList.toggle('invalid', !el.value || (el.type === 'number' && parseInt(el.value) <= 0));
+    });
+    return;
+  }
+
+  const saveBtn = tr.querySelector('.btn-inline-save');
+  saveBtn.disabled = true;
+
+  const { ok, data } = await apiFetch(`/api/portfolio/${h.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ symbol: symbolVal, shares: sharesVal, purchase_date: dateVal }),
+  });
+
+  saveBtn.disabled = false;
+
+  if (!ok) {
+    const detail = data.detail;
+    const msg = Array.isArray(detail)
+      ? detail.map(e => e.msg.replace('Value error, ', '')).join(' · ')
+      : (detail || 'Failed to save.');
+    alert(msg);
+    return;
+  }
+
+  // Update allHoldings in place
+  const idx = allHoldings.findIndex(x => x.id === h.id);
+  if (idx !== -1) allHoldings[idx] = data;
+
+  tr.replaceWith(makeHistoryRow(data));
+  renderPortfolio(allHoldings);
 }
 
 function filterHistoryBySymbol(symbol) {

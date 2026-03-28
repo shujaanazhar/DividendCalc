@@ -398,13 +398,13 @@ function renderResults(data) {
   container.innerHTML = '';
 
   data.holdings.forEach(h => {
+    if (!h.events.length) return;  // skip holdings with no dividends in this period
+
     const card = document.createElement('div');
     card.className = 'result-card';
 
     let bodyHtml = '';
-    if (!h.events.length) {
-      bodyHtml = `<div class="result-card-empty">No cash dividends in this period.</div>`;
-    } else {
+    {
       const rows = h.events.map(ev => `
         <tr>
           <td>${ev.ex_date}</td>

@@ -83,18 +83,20 @@ async function submitGate() {
 
 // ── Navigation ─────────────────────────────────────────────────────────────
 function initNav() {
-  document.querySelectorAll('.nav-item').forEach(link => {
+  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
-      const view = link.dataset.view;
-
-      document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(`view-${view}`).classList.add('active');
+      switchView(link.dataset.view);
     });
   });
+}
+
+function switchView(view) {
+  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(l => {
+    l.classList.toggle('active', l.dataset.view === view);
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${view}`).classList.add('active');
 }
 
 // ── Portfolio & History ────────────────────────────────────────────────────
@@ -222,11 +224,7 @@ function renderHistory(portfolio, filterSymbol = '') {
 }
 
 function filterHistoryBySymbol(symbol) {
-  // Switch to history view
-  document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
-  document.querySelector('[data-view="history"]').classList.add('active');
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  $('view-history').classList.add('active');
+  switchView('history');
   renderHistory(allHoldings, symbol);
 }
 
@@ -509,15 +507,22 @@ function initTheme() {
     const current = document.documentElement.dataset.theme || 'dark';
     applyTheme(current === 'dark' ? 'light' : 'dark');
   });
+
+  $('mobile-theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
 }
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem('psx_theme', theme);
   const isDark = theme === 'dark';
-  $('theme-icon-dark').style.display  = isDark ? '' : 'none';
-  $('theme-icon-light').style.display = isDark ? 'none' : '';
-  $('theme-label').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  $('theme-icon-dark').style.display        = isDark ? '' : 'none';
+  $('theme-icon-light').style.display       = isDark ? 'none' : '';
+  $('theme-label').textContent              = isDark ? 'Light Mode' : 'Dark Mode';
+  $('mobile-theme-icon-dark').style.display  = isDark ? '' : 'none';
+  $('mobile-theme-icon-light').style.display = isDark ? 'none' : '';
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────

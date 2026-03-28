@@ -760,10 +760,156 @@ body {
   padding: .6rem .875rem; font-size: .8rem;
 }
 
+/* ── Mobile top bar & bottom nav ────────────────────────────── */
+.mobile-header,
+.mobile-nav { display: none; }
+
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 680px) {
+  /* Hide desktop sidebar */
   .sidebar { display: none; }
-  .main { margin-left: 0; padding: 1.25rem 1rem; }
-  .summary-number { font-size: 2rem; }
+
+  /* Show mobile chrome */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 52px;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 0 1rem;
+    z-index: 10;
+  }
+
+  [data-theme="light"] .mobile-header {
+    border-bottom-color: rgba(0,0,0,.08);
+  }
+
+  .mobile-header-logo {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .mobile-header-logo .logo-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .mobile-theme-btn {
+    padding: .4rem .6rem;
+    margin: 0;
+    border-radius: 6px;
+  }
+
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--sidebar-bg);
+    border-top: 1px solid rgba(255,255,255,.06);
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  [data-theme="light"] .mobile-nav {
+    border-top-color: rgba(0,0,0,.08);
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    padding: .6rem .5rem;
+    color: #64748b;
+    text-decoration: none;
+    font-size: .65rem;
+    font-weight: 500;
+    transition: color .15s;
+  }
+
+  .mobile-nav-item svg { width: 20px; height: 20px; }
+  .mobile-nav-item.active { color: #22c55e; }
+  [data-theme="light"] .mobile-nav-item.active { color: #16a34a; }
+
+  /* Main layout */
+  .main {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: calc(52px + 1rem);   /* below top bar */
+    padding-bottom: calc(60px + 1rem); /* above bottom nav */
+  }
+
+  /* View header stacks on small screens */
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .view-header h1 { font-size: 1.25rem; }
+
+  .view-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Filter bar stacks */
+  .filter-bar { flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .filter-select { margin-left: 0; width: 100%; }
+
+  /* Tables scroll horizontally */
+  #portfolio-table-wrap,
+  #history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .history-table { min-width: 420px; }
+
+  /* Results summary */
+  .summary-number { font-size: 2.2rem; }
   .summary-breakdown { gap: 1.5rem; }
+
+  /* Result cards: dividend table scrolls */
+  .div-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .div-table { min-width: 500px; }
+
+  /* Calc panel — full-width button */
+  .btn-calc { width: 100%; justify-content: center; align-self: stretch; }
+
+  /* Date range stacks */
+  .date-range { flex-direction: column; gap: .75rem; }
+  .date-sep { display: none; }
+  .date-field input[type="date"] { width: 100%; }
+
+  /* Modals: full width with margin */
+  .modal-backdrop { padding: .75rem; align-items: flex-end; }
+  .modal, .modal-wide {
+    max-width: 100%;
+    border-radius: var(--radius) var(--radius) 0 0;
+    transform: translateY(32px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-backdrop.open .modal { transform: translateY(0); }
+  .modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Holdings input grid: symbol + shares stack, date below */
+  .holdings-table-head { display: none; }
+  .holding-row {
+    grid-template-columns: 1fr 1fr 32px;
+    grid-template-rows: auto auto;
+  }
+  .holding-row .row-date {
+    grid-column: 1 / 3;
+  }
+
+  /* Gate box */
+  .gate-box { padding: 2rem 1.25rem; }
 }

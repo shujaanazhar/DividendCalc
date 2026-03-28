@@ -229,33 +229,7 @@ body {
 .empty-state h3 { font-size: 1rem; font-weight: 600; }
 .empty-state p { color: var(--muted); font-size: .875rem; max-width: 260px; }
 
-/* ── Portfolio grid ─────────────────────────────────────────── */
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.holding-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: .75rem;
-  transition: box-shadow .2s;
-}
-
-.holding-card:hover { box-shadow: var(--shadow); }
-
-.holding-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
+/* ── Portfolio table ────────────────────────────────────────── */
 .symbol-pill {
   background: #f0fdf4;
   color: var(--accent-dark);
@@ -265,70 +239,78 @@ body {
   letter-spacing: .06em;
   padding: .3rem .65rem;
   border-radius: 999px;
+  white-space: nowrap;
 }
 
-.holding-card-shares {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text);
+.symbol-pill-link {
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.symbol-pill-link:hover {
+  background: #dcfce7;
+  border-color: var(--accent);
 }
 
-.holding-card-shares span {
-  font-size: .8rem;
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: .2rem;
-}
+.shares-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+.lots-cell   { color: var(--muted); font-size: .85rem; }
 
-.holding-card-date {
-  font-size: .8rem;
-  color: var(--muted);
+/* ── History filter bar ─────────────────────────────────────── */
+.filter-bar {
   display: flex;
   align-items: center;
-  gap: .3rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.holding-card-date svg { width: 13px; height: 13px; }
-
-/* ── Lot breakdown inside portfolio card ────────────────────── */
-.lot-count {
-  font-size: .75rem;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.holding-lots {
-  border-top: 1px solid var(--border);
-  margin-top: .75rem;
-  padding-top: .6rem;
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-}
-
-.lot-row {
+.filter-active {
   display: flex;
   align-items: center;
   gap: .5rem;
-  font-size: .8rem;
+  font-size: .85rem;
+  color: var(--muted);
 }
 
-.lot-date   { color: var(--muted); flex: 1; }
-.lot-shares { font-weight: 500; white-space: nowrap; }
+.filter-chip {
+  background: var(--accent-glow);
+  color: var(--accent-dark);
+  border: 1px solid #bbf7d0;
+  font-weight: 700;
+  font-size: .75rem;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+}
 
-.btn-remove-lot {
+.filter-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
   background: none;
   border: none;
-  color: var(--muted2);
+  color: var(--muted);
+  font-size: .8rem;
   cursor: pointer;
-  padding: .2rem;
+  padding: .2rem .4rem;
   border-radius: 4px;
-  display: flex; align-items: center;
-  transition: color .15s, background .15s;
-  flex-shrink: 0;
+  font-family: inherit;
 }
-.btn-remove-lot:hover { color: var(--red); background: var(--red-bg); }
-.btn-remove-lot svg { width: 13px; height: 13px; }
+.filter-clear svg { width: 12px; height: 12px; }
+.filter-clear:hover { color: var(--red); background: var(--red-bg); }
+
+.filter-select {
+  margin-left: auto;
+  padding: .4rem .7rem;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: .875rem;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--accent); }
+
 
 /* ── History table ──────────────────────────────────────────── */
 .history-table {
@@ -857,6 +839,5 @@ body {
 @media (max-width: 680px) {
   .sidebar { display: none; }
   .main { margin-left: 0; padding: 1.25rem 1rem; }
-  .portfolio-grid { grid-template-columns: 1fr; }
   .summary-number { font-size: 2rem; }
 }

@@ -86,7 +86,19 @@
         </button>
       </div>
 
-      <div id="portfolio-grid" class="portfolio-grid" style="display:none;"></div>
+      <div id="portfolio-table-wrap" style="display:none;">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Total Shares</th>
+              <th>Lots</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="portfolio-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ── History View ── -->
@@ -100,6 +112,22 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
           Add Holding
         </button>
+      </div>
+
+      <div id="history-filter-bar" style="display:none;">
+        <div class="filter-bar">
+          <div class="filter-active" id="history-filter-active" style="display:none;">
+            <span>Filtered by:</span>
+            <span class="filter-chip" id="history-filter-chip"></span>
+            <button class="filter-clear" id="history-filter-clear">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              Clear filter
+            </button>
+          </div>
+          <select class="filter-select" id="history-symbol-filter">
+            <option value="">All symbols</option>
+          </select>
+        </div>
       </div>
 
       <div id="history-empty" class="empty-state">

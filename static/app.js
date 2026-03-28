@@ -105,66 +105,20 @@ async function loadPortfolio() {
   if (ok) { allHoldings = data; renderPortfolio(data); renderHistory(data); }
 }
 
-function renderPortfolio(portfolio) {
-  const emptyEl = $('portfolio-empty');
-  const gridEl  = $('portfolio-grid');
-
-  if (!portfolio.length) {
-    emptyEl.style.display = 'flex';
-    gridEl.style.display  = 'none';
-    return;
-  }
-
-  // Group by symbol — sum shares, collect lots
+function groupBySymbol(portfolio) {
   const grouped = {};
   portfolio.forEach(h => {
     if (!grouped[h.symbol]) grouped[h.symbol] = { symbol: h.symbol, totalShares: 0, lots: [] };
     grouped[h.symbol].totalShares += h.shares;
     grouped[h.symbol].lots.push(h);
   });
-
-  emptyEl.style.display = 'none';
-  gridEl.style.display  = 'grid';
-  gridEl.innerHTML = '';
-
-  Object.values(grouped).sort((a, b) => a.symbol.localeCompare(b.symbol)).forEach(g => {
-    const card = document.createElement('div');
-    card.className = 'holding-card';
-
-    const lotsHtml = g.lots
-      .sort((a, b) => a.purchase_date.localeCompare(b.purchase_date))
-      .map(lot => `
-        <div class="lot-row" data-id="${lot.id}">
-          <span class="lot-date">${lot.purchase_date}</span>
-          <span class="lot-shares">${lot.shares.toLocaleString()} shares</span>
-          <button class="btn-remove-lot" title="Remove lot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-      `).join('');
-
-    card.innerHTML = `
-      <div class="holding-card-top">
-        <span class="symbol-pill">${g.symbol}</span>
-        <span class="lot-count">${g.lots.length} lot${g.lots.length > 1 ? 's' : ''}</span>
-      </div>
-      <div class="holding-card-shares">${g.totalShares.toLocaleString()}<span>total shares</span></div>
-      <div class="holding-lots">${lotsHtml}</div>
-    `;
-
-    card.querySelectorAll('.btn-remove-lot').forEach(btn => {
-      const id = parseInt(btn.closest('.lot-row').dataset.id);
-      btn.addEventListener('click', () => deleteHolding(id));
-    });
-
-    gridEl.appendChild(card);
-  });
+  return Object.values(grouped).sort((a, b) => a.symbol.localeCompare(b.symbol));
 }
 
-function renderHistory(portfolio) {
-  const emptyEl = $('history-empty');
-  const wrapEl  = $('history-table-wrap');
-  const bodyEl  = $('history-body');
+function renderPortfolio(portfolio) {
+  const emptyEl = $('portfolio-empty');
+  const wrapEl  = $('portfolio-table-wrap');
+  const bodyEl  = $('portfolio-body');
 
   if (!portfolio.length) {
     emptyEl.style.display = 'flex';
@@ -176,8 +130,77 @@ function renderHistory(portfolio) {
   wrapEl.style.display  = '';
   bodyEl.innerHTML = '';
 
-  // Sort oldest first
-  [...portfolio].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date)).forEach(h => {
+  groupBySymbol(portfolio).forEach(g => {
+    const tr = document.createElement('tr');
+    tr.className = 'portfolio-row';
+    tr.innerHTML = `
+      <td>
+        <span class="symbol-pill symbol-pill-link" data-symbol="${g.symbol}">${g.symbol}</span>
+      </td>
+      <td class="shares-cell">${g.totalShares.toLocaleString()}</td>
+      <td class="lots-cell">${g.lots.length} lot${g.lots.length > 1 ? 's' : ''}</td>
+      <td>
+        <button class="btn btn-danger" title="Remove all lots for ${g.symbol}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </td>
+    `;
+    // Click symbol → go to history filtered by that symbol
+    tr.querySelector('.symbol-pill-link').addEventListener('click', () => {
+      filterHistoryBySymbol(g.symbol);
+    });
+    // Delete all lots for this symbol
+    tr.querySelector('.btn-danger').addEventListener('click', async () => {
+      if (!confirm(`Remove all ${g.lots.length} lot(s) of ${g.symbol}?`)) return;
+      for (const lot of g.lots) {
+        await apiFetch(`/api/portfolio/${lot.id}`, { method: 'DELETE' });
+      }
+      loadPortfolio();
+      $('results').style.display = 'none';
+    });
+    bodyEl.appendChild(tr);
+  });
+}
+
+function renderHistory(portfolio, filterSymbol = '') {
+  const emptyEl   = $('history-empty');
+  const wrapEl    = $('history-table-wrap');
+  const bodyEl    = $('history-body');
+  const filterBar = $('history-filter-bar');
+  const filterActive = $('history-filter-active');
+  const filterChip   = $('history-filter-chip');
+  const filterSelect = $('history-symbol-filter');
+
+  // Populate filter dropdown with unique symbols
+  const symbols = [...new Set(portfolio.map(h => h.symbol))].sort();
+  filterSelect.innerHTML = '<option value="">All symbols</option>';
+  symbols.forEach(sym => {
+    const opt = document.createElement('option');
+    opt.value = sym; opt.textContent = sym;
+    if (sym === filterSymbol) opt.selected = true;
+    filterSelect.appendChild(opt);
+  });
+
+  const filtered = filterSymbol
+    ? portfolio.filter(h => h.symbol === filterSymbol)
+    : portfolio;
+
+  // Show/hide filter bar
+  if (portfolio.length) filterBar.style.display = '';
+  filterActive.style.display = filterSymbol ? 'flex' : 'none';
+  if (filterSymbol) filterChip.textContent = filterSymbol;
+
+  if (!filtered.length) {
+    emptyEl.style.display = 'flex';
+    wrapEl.style.display  = 'none';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  wrapEl.style.display  = '';
+  bodyEl.innerHTML = '';
+
+  [...filtered].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date)).forEach(h => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${h.purchase_date}</td>
@@ -192,6 +215,15 @@ function renderHistory(portfolio) {
     tr.querySelector('.btn-danger').addEventListener('click', () => deleteHolding(h.id));
     bodyEl.appendChild(tr);
   });
+}
+
+function filterHistoryBySymbol(symbol) {
+  // Switch to history view
+  document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+  document.querySelector('[data-view="history"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $('view-history').classList.add('active');
+  renderHistory(allHoldings, symbol);
 }
 
 async function deleteHolding(id) {
@@ -456,6 +488,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Escape closes modal
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();
+  });
+
+  // History filter
+  $('history-symbol-filter').addEventListener('change', e => {
+    renderHistory(allHoldings, e.target.value);
+  });
+  $('history-filter-clear').addEventListener('click', () => {
+    renderHistory(allHoldings, '');
   });
 
   // Calc button

@@ -42,6 +42,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         Portfolio
       </a>
+      <a href="#" class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        History
+      </a>
       <a href="#" class="nav-item" data-view="calculate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3-3-3m3 3V4"/></svg>
         Calculate
@@ -83,6 +87,42 @@
       </div>
 
       <div id="portfolio-grid" class="portfolio-grid" style="display:none;"></div>
+    </div>
+
+    <!-- ── History View ── -->
+    <div class="view" id="view-history">
+      <div class="view-header">
+        <div>
+          <h1>Purchase History</h1>
+          <p class="view-subtitle">All individual stock purchases, oldest first</p>
+        </div>
+        <button class="btn btn-primary" id="history-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Add Holding
+        </button>
+      </div>
+
+      <div id="history-empty" class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3>No purchase history</h3>
+        <p>Your stock purchases will appear here.</p>
+      </div>
+
+      <div id="history-table-wrap" style="display:none;">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Symbol</th>
+              <th>Shares</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ── Calculate View ── -->

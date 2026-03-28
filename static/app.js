@@ -40,7 +40,7 @@ async function initGate() {
   if (stored) {
     // Verify stored key is still valid
     const { ok, data } = await apiFetch('/api/portfolio');
-    if (ok) { showApp(); renderPortfolio(data); return; }
+    if (ok) { allHoldings = data; showApp(); renderPortfolio(data); renderHistory(data); return; }
     localStorage.removeItem('psx_api_key');
   }
   showGate();
@@ -97,10 +97,12 @@ function initNav() {
   });
 }
 
-// ── Portfolio ──────────────────────────────────────────────────────────────
+// ── Portfolio & History ────────────────────────────────────────────────────
+let allHoldings = [];
+
 async function loadPortfolio() {
   const { ok, data } = await apiFetch('/api/portfolio');
-  if (ok) renderPortfolio(data);
+  if (ok) { allHoldings = data; renderPortfolio(data); renderHistory(data); }
 }
 
 function renderPortfolio(portfolio) {
@@ -113,35 +115,87 @@ function renderPortfolio(portfolio) {
     return;
   }
 
+  // Group by symbol — sum shares, collect lots
+  const grouped = {};
+  portfolio.forEach(h => {
+    if (!grouped[h.symbol]) grouped[h.symbol] = { symbol: h.symbol, totalShares: 0, lots: [] };
+    grouped[h.symbol].totalShares += h.shares;
+    grouped[h.symbol].lots.push(h);
+  });
+
   emptyEl.style.display = 'none';
   gridEl.style.display  = 'grid';
   gridEl.innerHTML = '';
 
-  portfolio.forEach(h => {
+  Object.values(grouped).sort((a, b) => a.symbol.localeCompare(b.symbol)).forEach(g => {
     const card = document.createElement('div');
     card.className = 'holding-card';
+
+    const lotsHtml = g.lots
+      .sort((a, b) => a.purchase_date.localeCompare(b.purchase_date))
+      .map(lot => `
+        <div class="lot-row" data-id="${lot.id}">
+          <span class="lot-date">${lot.purchase_date}</span>
+          <span class="lot-shares">${lot.shares.toLocaleString()} shares</span>
+          <button class="btn-remove-lot" title="Remove lot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `).join('');
+
     card.innerHTML = `
       <div class="holding-card-top">
-        <span class="symbol-pill">${h.symbol}</span>
-        <button class="btn btn-danger" title="Remove holding">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <span class="symbol-pill">${g.symbol}</span>
+        <span class="lot-count">${g.lots.length} lot${g.lots.length > 1 ? 's' : ''}</span>
       </div>
-      <div>
-        <div class="holding-card-shares">${h.shares.toLocaleString()}<span>shares</span></div>
-      </div>
-      <div class="holding-card-date">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        Bought ${h.purchase_date}
-      </div>
+      <div class="holding-card-shares">${g.totalShares.toLocaleString()}<span>total shares</span></div>
+      <div class="holding-lots">${lotsHtml}</div>
     `;
-    card.querySelector('.btn-danger').addEventListener('click', () => deleteHolding(h.id));
+
+    card.querySelectorAll('.btn-remove-lot').forEach(btn => {
+      const id = parseInt(btn.closest('.lot-row').dataset.id);
+      btn.addEventListener('click', () => deleteHolding(id));
+    });
+
     gridEl.appendChild(card);
   });
 }
 
+function renderHistory(portfolio) {
+  const emptyEl = $('history-empty');
+  const wrapEl  = $('history-table-wrap');
+  const bodyEl  = $('history-body');
+
+  if (!portfolio.length) {
+    emptyEl.style.display = 'flex';
+    wrapEl.style.display  = 'none';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  wrapEl.style.display  = '';
+  bodyEl.innerHTML = '';
+
+  // Sort oldest first
+  [...portfolio].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date)).forEach(h => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${h.purchase_date}</td>
+      <td><span class="symbol-pill">${h.symbol}</span></td>
+      <td>${h.shares.toLocaleString()}</td>
+      <td>
+        <button class="btn btn-danger" title="Remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </td>
+    `;
+    tr.querySelector('.btn-danger').addEventListener('click', () => deleteHolding(h.id));
+    bodyEl.appendChild(tr);
+  });
+}
+
 async function deleteHolding(id) {
-  if (!confirm('Remove this holding from your portfolio?')) return;
+  if (!confirm('Remove this holding?')) return;
   const { ok } = await apiFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
   if (ok) {
     loadPortfolio();
@@ -390,6 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modal triggers
   $('open-add-btn').addEventListener('click', openModal);
   $('empty-add-btn').addEventListener('click', openModal);
+  $('history-add-btn').addEventListener('click', openModal);
   $('modal-close').addEventListener('click', closeModal);
   $('modal-cancel').addEventListener('click', closeModal);
   $('modal-submit').addEventListener('click', submitHoldings);

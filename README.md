@@ -85,9 +85,10 @@ venv/bin/uvicorn server:app --reload --port 5000
 
 Then open `http://localhost:5000` in your browser.
 
-The app has two views accessible from the sidebar:
+The app has three views accessible from the sidebar:
 
-- **Portfolio** — add and remove your stock holdings
+- **Portfolio** — stocks grouped by symbol showing total shares per company, with individual purchase lots listed under each
+- **History** — every individual purchase entry sorted oldest first, with the ability to delete individual lots
 - **Calculate** — select a period and tax status, then fetch live PSX data and compute your dividends
 
 ## Running the CLI (alternative)

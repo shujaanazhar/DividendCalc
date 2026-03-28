@@ -193,6 +193,18 @@ Dividend history is fetched live from the [PSX Data Portal](https://dps.psx.com.
 - **DB errors not leaked** — internal psycopg2 errors are logged server-side only; client receives a generic `"Database error"` message.
 - **`.env` gitignored** — credentials never committed to version control.
 
+## Design Files
+
+The UI designs for all 4 screens are included in [`pencil-new.pen`](./pencil-new.pen) (Pencil format).
+
+Screens covered:
+- **01 - Login Gate** — API key entry screen
+- **02 - Portfolio** — Holdings grouped by symbol
+- **03 - History** — Purchase history with filter bar
+- **04 - Calculate** — Period/tax selection and dividend results
+
+Open with [Pencil](https://pencil.studio) to view or edit the designs.
+
 ## Limitations
 
 - Only **cash dividends** are counted. Bonus shares are detected and displayed but excluded from PKR calculations.

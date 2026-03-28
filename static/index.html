@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSX Dividend Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<!-- API key gate — shown before app if no key stored -->
+
+<body>
+
+  <!-- Key gate -->
+  <div id="key-gate" style="display:none;">
+    <div class="gate-box">
+      <div class="gate-logo"><div class="logo-mark">PSX</div></div>
+      <h2>Enter API Key</h2>
+      <p>This app is private. Enter your API key to continue.</p>
+      <div class="field">
+        <input type="password" id="gate-key-input" placeholder="API key" autocomplete="current-password" />
+      </div>
+      <div class="gate-error" id="gate-error" style="display:none;">Incorrect API key.</div>
+      <button class="btn btn-primary" id="gate-submit">Unlock</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">PSX</div>
+      <div class="logo-text">
+        <span class="logo-title">Dividend</span>
+        <span class="logo-sub">Calculator</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-view="portfolio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Portfolio
+      </a>
+      <a href="#" class="nav-item" data-view="calculate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3-3-3m3 3V4"/></svg>
+        Calculate
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <p>Data from <a href="https://dps.psx.com.pk" target="_blank">dps.psx.com.pk</a></p>
+      <p>Face value: PKR 10 &bull; Cash dividends only</p>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- ── Portfolio View ── -->
+    <div class="view active" id="view-portfolio">
+      <div class="view-header">
+        <div>
+          <h1>My Portfolio</h1>
+          <p class="view-subtitle">Manage your PSX stock holdings</p>
+        </div>
+        <button class="btn btn-primary" id="open-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Add Holding
+        </button>
+      </div>
+
+      <div id="portfolio-empty" class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m5-9v9m4-9v9m4-9l2 9"/></svg>
+        </div>
+        <h3>No holdings yet</h3>
+        <p>Add your first PSX stock to start tracking dividends.</p>
+        <button class="btn btn-primary" id="empty-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Add First Holding
+        </button>
+      </div>
+
+      <div id="portfolio-grid" class="portfolio-grid" style="display:none;"></div>
+    </div>
+
+    <!-- ── Calculate View ── -->
+    <div class="view" id="view-calculate">
+      <div class="view-header">
+        <div>
+          <h1>Calculate Dividends</h1>
+          <p class="view-subtitle">Fetch live data and compute your dividend income</p>
+        </div>
+      </div>
+
+      <div class="calc-panel">
+        <div class="period-section">
+          <label class="section-label">Period</label>
+          <div class="period-pills">
+            <button class="pill active" data-period="all">All Time</button>
+            <button class="pill" data-period="ytd">YTD</button>
+            <button class="pill" data-period="month">This Month</button>
+            <button class="pill" data-period="year">By Year</button>
+            <button class="pill" data-period="custom">Custom</button>
+          </div>
+
+          <div id="opt-year" class="period-option" style="display:none;">
+            <label>Year</label>
+            <input type="number" id="year-field" min="2000" max="2035" />
+          </div>
+
+          <div id="opt-custom" class="period-option" style="display:none;">
+            <div class="date-range">
+              <div class="date-field">
+                <label>From</label>
+                <input type="date" id="from-date" />
+              </div>
+              <div class="date-sep">→</div>
+              <div class="date-field">
+                <label>To</label>
+                <input type="date" id="to-date" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="period-section">
+          <label class="section-label">Tax Status</label>
+          <div class="period-pills">
+            <button class="pill active" data-tax="filer">Filer (15%)</button>
+            <button class="pill" data-tax="non_filer">Non-Filer (30%)</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-calc" id="calc-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Calculate Now
+        </button>
+      </div>
+
+      <div id="calc-loading" class="loading-bar" style="display:none;">
+        <div class="loading-bar-fill"></div>
+      </div>
+
+      <div id="calc-error" class="error-banner" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span id="calc-error-msg"></span>
+      </div>
+
+      <div id="results" style="display:none;">
+        <div class="results-summary">
+          <div class="summary-label" id="results-label"></div>
+          <div class="summary-amount">
+            <span class="summary-currency">PKR</span>
+            <span class="summary-number" id="grand-net"></span>
+          </div>
+          <div class="summary-sub">After Tax (Net Received)</div>
+          <div class="summary-breakdown">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Gross (Before Tax)</span>
+              <span class="breakdown-value" id="grand-gross"></span>
+            </div>
+            <div class="breakdown-item breakdown-tax">
+              <span class="breakdown-label">WHT Deducted (<span id="tax-rate-label"></span>%)</span>
+              <span class="breakdown-value" id="grand-tax"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="holdings-results" class="holdings-results"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Add Holding Modal ── -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2>Add Holding</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="add-symbol">Stock Symbol</label>
+          <input type="text" id="add-symbol" placeholder="e.g. HBL, LUCK, MCB, OGDC" autocomplete="off" spellcheck="false" />
+          <span class="field-hint">PSX ticker symbol, e.g. HBL</span>
+        </div>
+        <div class="field">
+          <label for="add-shares">Number of Shares</label>
+          <input type="number" id="add-shares" placeholder="1000" min="1" />
+        </div>
+        <div class="field">
+          <label for="add-date">Purchase Date</label>
+          <input type="date" id="add-date" />
+          <span class="field-hint">Dividends before this date are excluded</span>
+        </div>
+        <div class="modal-error" id="modal-error" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-submit">Add Holding</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

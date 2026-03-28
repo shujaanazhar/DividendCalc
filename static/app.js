@@ -47,11 +47,13 @@ async function initGate() {
 }
 
 function showGate() {
+  $('key-gate').style.display = 'flex';
   document.body.classList.add('gate-visible');
   setTimeout(() => $('gate-key-input').focus(), 60);
 }
 
 function showApp() {
+  $('key-gate').style.display = 'none';
   document.body.classList.remove('gate-visible');
 }
 

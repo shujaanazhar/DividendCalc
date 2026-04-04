@@ -481,60 +481,75 @@ function renderResults(data) {
   const container = $('holdings-results');
   container.innerHTML = '';
 
+  // Group holdings by symbol
+  const grouped = {};
   data.holdings.forEach(h => {
-    if (!h.events.length) return;  // skip holdings with no dividends in this period
+    if (!h.events.length) return;
+    if (!grouped[h.symbol]) {
+      grouped[h.symbol] = { symbol: h.symbol, totalShares: 0, gross: 0, tax: 0, net: 0, eventsMap: {} };
+    }
+    const g = grouped[h.symbol];
+    g.totalShares += h.shares;
+    g.gross       += h.gross;
+    g.tax         += h.tax;
+    g.net         += h.net;
+    // Merge events by ex_date — sum amounts across lots for the same dividend
+    h.events.forEach(ev => {
+      const key = ev.ex_date;
+      if (!g.eventsMap[key]) {
+        g.eventsMap[key] = { ...ev, gross: 0, tax: 0, net: 0 };
+      }
+      g.eventsMap[key].gross += ev.gross;
+      g.eventsMap[key].tax   += ev.tax;
+      g.eventsMap[key].net   += ev.net;
+    });
+  });
+
+  Object.values(grouped).forEach(g => {
+    const events = Object.values(g.eventsMap).sort((a, b) => a.ex_date.localeCompare(b.ex_date));
+
+    const rows = events.map(ev => `
+      <tr>
+        <td>${ev.ex_date}</td>
+        <td>${ev.payment_date || ev.ex_date}</td>
+        <td>${ev.period}</td>
+        <td><span class="pct-badge">${ev.cash_pct}%</span></td>
+        <td class="col-right">PKR ${fmt(ev.gross)}</td>
+        <td class="col-right col-tax">− PKR ${fmt(ev.tax)}</td>
+        <td class="col-right col-net">PKR ${fmt(ev.net)}</td>
+      </tr>
+    `).join('');
 
     const card = document.createElement('div');
     card.className = 'result-card';
-
-    let bodyHtml = '';
-    {
-      const rows = h.events.map(ev => `
-        <tr>
-          <td>${ev.ex_date}</td>
-          <td>${ev.payment_date || ev.ex_date}</td>
-          <td>${ev.period}</td>
-          <td><span class="pct-badge">${ev.cash_pct}%</span></td>
-          <td class="col-right">PKR ${fmt(ev.gross)}</td>
-          <td class="col-right col-tax">− PKR ${fmt(ev.tax)}</td>
-          <td class="col-right col-net">PKR ${fmt(ev.net)}</td>
-        </tr>
-      `).join('');
-
-      bodyHtml = `
-        <div class="div-table-wrap">
-          <table class="div-table">
-            <thead>
-              <tr>
-                <th>Ex-Date</th>
-                <th>Est. Payment</th>
-                <th>Period</th>
-                <th>Cash %</th>
-                <th class="col-right">Gross</th>
-                <th class="col-right">WHT</th>
-                <th class="col-right">Net</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      `;
-    }
-
     card.innerHTML = `
       <div class="result-card-header">
         <div class="result-card-left">
-          <span class="symbol-pill">${h.symbol}</span>
-          <div class="result-card-meta">${h.shares.toLocaleString()} shares &bull; bought ${h.purchase_date}</div>
+          <span class="symbol-pill">${g.symbol}</span>
+          <div class="result-card-meta">${g.totalShares.toLocaleString()} shares total</div>
         </div>
         <div class="result-card-totals">
-          <div class="result-card-net">PKR ${fmt(h.net)}</div>
-          <div class="result-card-gross">Gross: PKR ${fmt(h.gross)}</div>
+          <div class="result-card-net">PKR ${fmt(g.net)}</div>
+          <div class="result-card-gross">Gross: PKR ${fmt(g.gross)}</div>
         </div>
       </div>
-      ${bodyHtml}
+      <div class="div-table-wrap">
+        <table class="div-table">
+          <thead>
+            <tr>
+              <th>Ex-Date</th>
+              <th>Est. Payment</th>
+              <th>Period</th>
+              <th>Cash %</th>
+              <th class="col-right">Gross</th>
+              <th class="col-right">WHT</th>
+              <th class="col-right">Net</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     `;
-
     container.appendChild(card);
   });
 

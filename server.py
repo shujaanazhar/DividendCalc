@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from datetime import date, datetime
 from typing import Optional
 
+from datetime import timedelta
+
 import psycopg2
 import psycopg2.extras
 import requests
@@ -290,7 +292,9 @@ def fetch_dividends(symbol: str) -> list:
                 pass
             if len(bc_parts) >= 2:
                 try:
-                    payment_date = datetime.strptime(bc_parts[1].strip(), "%d/%m/%Y").date()
+                    bc_end       = datetime.strptime(bc_parts[1].strip(), "%d/%m/%Y").date()
+                    # CDC typically credits ~15 days after book closure ends
+                    payment_date = bc_end + timedelta(days=15)
                 except Exception:
                     payment_date = ex_date
 

@@ -507,7 +507,7 @@ function renderResults(data) {
             <thead>
               <tr>
                 <th>Ex-Date</th>
-                <th>Book Closure End</th>
+                <th>Est. Payment</th>
                 <th>Period</th>
                 <th>Cash %</th>
                 <th class="col-right">Gross</th>

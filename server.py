@@ -434,11 +434,13 @@ def calculate_route(request: Request, req: CalcRequest):
         from_date, to_date, label = None, None, "All Time"
     elif req.period == "ytd":
         from_date = date(today.year, 1, 1)
-        to_date   = today
+        to_date   = date(today.year, 12, 31)   # full year — include near-future payments
         label     = f"Year to Date ({today.year})"
     elif req.period == "month":
+        import calendar
+        last_day  = calendar.monthrange(today.year, today.month)[1]
         from_date = date(today.year, today.month, 1)
-        to_date   = today
+        to_date   = date(today.year, today.month, last_day)  # full month
         label     = today.strftime("%B %Y")
     elif req.period == "year":
         year      = req.year or today.year

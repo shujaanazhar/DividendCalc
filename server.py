@@ -274,17 +274,30 @@ def fetch_dividends(symbol: str) -> list:
             elif dtype == "B":
                 bonus_pct += float(pct_str)
 
-        ex_date = ann_date
-        bc_parts = book_closure.replace("\xa0", " ").split("-")
+        # Parse book closure: "23/03/2026  - 30/03/2026"
+        # ex_date = day before book closure start (eligibility cutoff)
+        # payment_date = book closure end + ~15 days (when money actually arrives)
+        # We use book closure END for period filtering since that's closest to payment.
+        ex_date      = ann_date  # fallback
+        payment_date = ann_date  # fallback
+        bc_str = book_closure.replace("\xa0", " ").strip()
+        bc_parts = [p.strip() for p in bc_str.split("-") if p.strip()]
         if bc_parts:
             try:
-                ex_date = datetime.strptime(bc_parts[0].strip(), "%d/%m/%Y").date()
+                bc_start = datetime.strptime(bc_parts[0].strip(), "%d/%m/%Y").date()
+                ex_date  = bc_start  # day before bc_start is true ex-date, bc_start ≈ good enough
             except Exception:
                 pass
+            if len(bc_parts) >= 2:
+                try:
+                    payment_date = datetime.strptime(bc_parts[1].strip(), "%d/%m/%Y").date()
+                except Exception:
+                    payment_date = ex_date
 
         dividends.append({
             "announcement_date": ann_date.isoformat(),
             "ex_date":           ex_date.isoformat(),
+            "payment_date":      payment_date.isoformat(),
             "period":            period,
             "cash_pct":          cash_pct,
             "bonus_pct":         bonus_pct,
@@ -310,12 +323,15 @@ def calculate(holdings: list, dividends_by_symbol: dict,
         events        = []
 
         for div in dividends_by_symbol.get(symbol, []):
-            ex_date = date.fromisoformat(div["ex_date"])
+            ex_date      = date.fromisoformat(div["ex_date"])
+            payment_date = date.fromisoformat(div.get("payment_date", div["ex_date"]))
+            # Must have held the stock before ex-date to be eligible
             if ex_date < purchase_date:
                 continue
-            if from_date and ex_date < from_date:
+            # Period filter uses payment_date — when money actually arrives
+            if from_date and payment_date < from_date:
                 continue
-            if to_date and ex_date > to_date:
+            if to_date and payment_date > to_date:
                 continue
             if div["cash_pct"] == 0:
                 continue
@@ -324,7 +340,8 @@ def calculate(holdings: list, dividends_by_symbol: dict,
             tax   = gross * tax_rate
             holding_gross += gross
             events.append({
-                "ex_date":   div["ex_date"],
+                "ex_date":      div["ex_date"],
+                "payment_date": div.get("payment_date", div["ex_date"]),
                 "period":    div["period"],
                 "cash_pct":  div["cash_pct"],
                 "bonus_pct": div["bonus_pct"],

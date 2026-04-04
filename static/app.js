@@ -492,9 +492,9 @@ function renderResults(data) {
       const rows = h.events.map(ev => `
         <tr>
           <td>${ev.ex_date}</td>
+          <td>${ev.payment_date || ev.ex_date}</td>
           <td>${ev.period}</td>
           <td><span class="pct-badge">${ev.cash_pct}%</span></td>
-          <td><span class="details-text">${ev.details}</span></td>
           <td class="col-right">PKR ${fmt(ev.gross)}</td>
           <td class="col-right col-tax">− PKR ${fmt(ev.tax)}</td>
           <td class="col-right col-net">PKR ${fmt(ev.net)}</td>
@@ -507,9 +507,9 @@ function renderResults(data) {
             <thead>
               <tr>
                 <th>Ex-Date</th>
+                <th>Book Closure End</th>
                 <th>Period</th>
                 <th>Cash %</th>
-                <th>Details</th>
                 <th class="col-right">Gross</th>
                 <th class="col-right">WHT</th>
                 <th class="col-right">Net</th>

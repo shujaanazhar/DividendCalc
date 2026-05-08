@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import secrets
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime
 from typing import Optional
 
@@ -43,8 +43,15 @@ SYMBOL_RE = re.compile(r"^[A-Z0-9]{1,8}$")
 # ── App setup ─────────────────────────────────────────────────────────────────
 
 limiter = Limiter(key_func=get_remote_address)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="PSX Dividend Calculator",
+    lifespan=lifespan,
     docs_url=None,      # disable /docs
     redoc_url=None,     # disable /redoc
     openapi_url=None,   # disable /openapi.json
@@ -108,10 +115,6 @@ def init_db():
                     created_at    TIMESTAMPTZ DEFAULT now()
                 )
             """)
-
-@app.on_event("startup")
-def startup():
-    init_db()
 
 
 # ── Models ────────────────────────────────────────────────────────────────────
